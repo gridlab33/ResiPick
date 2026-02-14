@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { parseUrl, getSupportedSources, fetchYouTubeMetadata } from '../utils/urlParser';
+import { parseUrl, getSupportedSources, fetchYouTubeMetadata, fetchInstagramMetadata } from '../utils/urlParser';
 import { Check, Loader2, Sparkles, FileText, X } from 'lucide-react';
 import { SourceIcon } from './SourceIcon';
 
@@ -17,6 +17,8 @@ export function AddRecipeModal({ isOpen, onClose, onSave, categories, settings }
     const [description, setDescription] = useState('');
 
     const supportedSources = getSupportedSources();
+
+    const [thumbnail, setThumbnail] = useState(null); // Add thumbnail state
 
     useEffect(() => {
         if (url) {
@@ -52,6 +54,33 @@ export function AddRecipeModal({ isOpen, onClose, onSave, categories, settings }
                             setIsTempTitle(true);
                         }
                     });
+                } else if (parsed.source === 'instagram' && parsed.videoId) {
+                    // For Instagram: Fetch caption using RapidAPI
+                    setIsLoading(true);
+                    setIsTempTitle(false);
+
+                    fetchInstagramMetadata(parsed.videoId, settings?.rapidApiKey).then((metadata) => {
+                        setIsLoading(false);
+                        if (metadata) {
+                            if (metadata.title) {
+                                setTitle(metadata.title);
+                            }
+                            if (metadata.authorName) {
+                                setCreatorName(metadata.authorName);
+                            }
+                            if (metadata.description) {
+                                setDescription(metadata.description);
+                            }
+                            if (metadata.thumbnail) {
+                                setThumbnail(metadata.thumbnail); // Set thumbnail
+                            }
+                        } else {
+                            console.log('⚠️ No metadata received, using fallback');
+                            // Fallback to suggested title if API fails
+                            setTitle(parsed.suggestedTitle);
+                            setIsTempTitle(true);
+                        }
+                    });
                 } else {
                     // For other platforms: Use temporary title
                     setTitle(parsed.suggestedTitle);
@@ -61,6 +90,7 @@ export function AddRecipeModal({ isOpen, onClose, onSave, categories, settings }
         } else {
             setParsedData(null);
             setIsTempTitle(false);
+            setThumbnail(null); // Reset thumbnail
         }
     }, [url, settings]);
 
@@ -81,7 +111,7 @@ export function AddRecipeModal({ isOpen, onClose, onSave, categories, settings }
             creatorHandle: parsedData?.creatorHandle || creatorName,
             creatorName: creatorName || parsedData?.creatorHandle || '',
             title: title || '제목 없음',
-            thumbnail: parsedData?.thumbnail || null,
+            thumbnail: thumbnail || parsedData?.thumbnail || null, // Use the state thumbnail first
             categories: selectedCategories,
             notes,
             description, // Include the pasted description

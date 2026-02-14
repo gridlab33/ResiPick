@@ -174,35 +174,33 @@ export function RecipeDetailPage({ recipe, onBack, onUpdate, onDelete, onAddToSh
                     원본 영상 보기 ↗
                 </button>
 
-                {/* ===== RECIPE SECTION ===== */}
-                <div className="recipe-section">
-                    <div
-                        className="recipe-section__header"
-                        onClick={() => setShowRecipe(!showRecipe)}
-                    >
-                        <h3 className="recipe-section__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ChefHat size={20} /> 레시피</h3>
-                        <span className={`recipe-section__toggle ${showRecipe ? 'open' : ''}`}>
-                            {showRecipe ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </span>
-                    </div>
+                {/* ===== VIDEO DESCRIPTION SECTION ===== */}
+                {recipe.description && (
+                    <div className="recipe-section">
+                        <div
+                            className="recipe-section__header"
+                            onClick={() => setShowRecipe(!showRecipe)}
+                        >
+                            <h3 className="recipe-section__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ChefHat size={20} /> 영상설명</h3>
+                            <span className={`recipe-section__toggle ${showRecipe ? 'open' : ''}`}>
+                                {showRecipe ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </span>
+                        </div>
 
-                    {showRecipe && (
-                        <div className="recipe-section__body">
-                            {/* Steps */}
-                            <div className="recipe-steps">
-                                <h4 className="recipe-subsection-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><ChefHat size={16} /> 조리 순서</h4>
-                                <div className="recipe-steps__list">
-                                    {recipeData.steps.map((step, idx) => (
-                                        <div key={idx} className="recipe-step">
-                                            <div className="recipe-step__number">{idx + 1}</div>
-                                            <div className="recipe-step__text">{step}</div>
-                                        </div>
-                                    ))}
+                        {showRecipe && (
+                            <div className="recipe-section__body">
+                                <div className="recipe-description" style={{
+                                    whiteSpace: 'pre-wrap',
+                                    lineHeight: '1.6',
+                                    color: 'var(--color-text)',
+                                    padding: 'var(--spacing-md)'
+                                }}>
+                                    {recipe.description}
                                 </div>
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
 
                 {/* ===== SHOPPING SECTION ===== */}
                 <div className="shopping-section">

@@ -165,13 +165,31 @@ function parseDescription(text) {
     const ingredients = [];
     const steps = [];
 
-    // Simple heuristic: 
-    // - Look for section headers (Optional)
-    // - Numbered lines -> Steps
-    // - Lines with quantities or special chars -> Ingredients (if not numbered)
-    // - Or just split by headers
+    // Helper function to detect cooking instructions
+    const looksLikeCookingInstruction = (line) => {
+        // 1. Explicit cooking verbs (strong signal)
+        const cookingVerbPattern = /(주세요|줘요|해요|하세요|세요|하고|넣고|볶아|끓여|썰어|담아|올려|섞어|뿌려|으로|합니다|입니다|ㅂ니다|된다|한다|킨다|둔다|구워|부어|발라|재워|씻어|헹궈|데쳐|삶아|건져|오르면|되면)/;
+        if (cookingVerbPattern.test(line)) return true;
 
-    let section = 'unknown'; // 'unknown', 'ingredients', 'steps'
+        // 2. Sentence endings (very strong signal for instructions)
+        // Ends with 요, 다, 시오, 죠, 구요 etc.
+        if (/(요|다|시오|죠|구요|에요|이에요)[.]?$/.test(line)) return true;
+
+        // 3. Heuristic: Long sentences with particles are likely instructions
+        // Ingredients are usually short: "Onion 1pc" or "Goalless 1T"
+        // Instructions are sentences: "Put the onion in the pot."
+        const particleCount = (line.match(/[은는을를에서와과도]/g) || []).length;
+
+        // If it has particles and is reasonably long, it's a sentence
+        if (line.length > 15 && particleCount >= 1) return true;
+
+        // If it's very long, it's almost certainly not a simple ingredient name
+        if (line.length > 30) return true;
+
+        return false;
+    };
+
+    let section = 'unknown';
 
     for (const line of lines) {
         // 1. Detect Headers
@@ -186,14 +204,29 @@ function parseDescription(text) {
 
         // 2. Detect Content based on Section
         if (section === 'ingredients') {
-            // Try to parse: "Name Amount"
-            // For now, just take the whole line
-            ingredients.push({
-                name: line.replace(/^[-•*]\s*/, ''), // Remove bullet points
-                amount: '',
-                unit: '',
-                emoji: '🥗' // Default emoji
-            });
+            // Skip if it looks like cooking instruction
+            if (looksLikeCookingInstruction(line)) {
+                continue;
+            }
+
+            // Extract ingredient name only, removing measurements
+            let ingredientName = line.replace(/^[-•*]\s*/, ''); // Remove bullet points
+
+            // Try to extract just the ingredient name before any measurements
+            // Common patterns: "소고기 200g", "양파 1개", "간장 3큰술"
+            ingredientName = ingredientName
+                .replace(/\d+(\.\d+)?\s*(g|kg|ml|L|cc|개|큰술|작은술|T|t|컵|Cup|cup|oz|lb|tbsp|tsp|장|쪽|대|알|봉지|캔)/gi, '') // Remove measurements
+                .replace(/약간|적당량|조금|충분히|필요시|선택|optional/gi, '') // Remove qualifiers
+                .trim();
+
+            if (ingredientName) {
+                ingredients.push({
+                    name: ingredientName,
+                    amount: '',
+                    unit: '',
+                    emoji: '🥗' // Default emoji
+                });
+            }
         } else if (section === 'steps') {
             steps.push(line.replace(/^\d+\.\s*/, '').replace(/^[-•*]\s*/, ''));
         } else {
@@ -205,13 +238,27 @@ function parseDescription(text) {
                 // Bullet points in unknown section -> likely ingredients if not numbered
                 // But could be unordered steps.
                 // Let's assume ingredients if short?
-                if (line.length < 30) {
-                    ingredients.push({
-                        name: line.replace(/^[-•*]\s*/, ''),
-                        amount: '',
-                        unit: '',
-                        emoji: '🥗'
-                    });
+                // 1. Check if it looks like an instruction first
+                if (looksLikeCookingInstruction(line)) {
+                    steps.push(line.replace(/^[-•*]\s*/, ''));
+                }
+                // 2. If short and NOT an instruction, assume ingredient
+                else if (line.length < 50) {
+                    let ingredientName = line.replace(/^[-•*]\s*/, '');
+                    // Clean up measurements
+                    ingredientName = ingredientName
+                        .replace(/\d+(\.\d+)?\s*(g|kg|ml|L|cc|개|큰술|작은술|T|t|컵|Cup|cup|oz|lb|tbsp|tsp|장|쪽|대|알|봉지|캔)/gi, '')
+                        .replace(/약간|적당량|조금|충분히|필요시|선택|optional/gi, '')
+                        .trim();
+
+                    if (ingredientName) {
+                        ingredients.push({
+                            name: ingredientName,
+                            amount: '',
+                            unit: '',
+                            emoji: '🥗'
+                        });
+                    }
                 } else {
                     steps.push(line.replace(/^[-•*]\s*/, ''));
                 }

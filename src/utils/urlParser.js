@@ -28,6 +28,119 @@ const URL_PATTERNS = {
 };
 
 /**
+ * Fetch Instagram post metadata using RapidAPI
+ * Returns { title, description, authorName, thumbnail } or null if failed
+ * 
+ * Export for external use in RecipeDetailPage and other components
+ */
+// Helper to extract username from URL if present
+const extractInstagramUsername = (url) => {
+    const match = url.match(/instagram\.com\/([^\/\?]+)/i);
+    // Filter out 'reel', 'p', 'reels', etc. if they are captured as username
+    if (match && match[1]) {
+        const candidate = match[1];
+        if (['reel', 'p', 'reels', 'explore', 'stories'].includes(candidate.toLowerCase())) {
+            return '';
+        }
+        return candidate;
+    }
+    return '';
+};
+
+export async function fetchInstagramMetadata(postId, rapidApiKey, originalUrl = '') {
+    // Attempt to extract username from URL immediately for fallback
+    const urlUsername = originalUrl ? extractInstagramUsername(originalUrl) : '';
+
+    // 1. Try Netlify Function (Serverless) - Cost Free
+    // This works if deployed OR if running 'netlify dev' locally.
+    // If running 'npm run dev', this will likely 404, so we handle that.
+    try {
+        if (originalUrl) {
+            console.log('☁️ Attempting Netlify Function...');
+            const funcUrl = `/.netlify/functions/get-instagram-thumbnail?url=${encodeURIComponent(originalUrl)}`;
+            const response = await fetch(funcUrl);
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.thumbnail) {
+                    console.log('✅ Netlify Function Success:', data);
+                    return {
+                        title: data.title || (urlUsername ? `Instagram Post by @${urlUsername}` : `Instagram Post`),
+                        description: data.description || '',
+                        authorName: urlUsername ? `@${urlUsername}` : '',
+                        thumbnail: data.thumbnail,
+                        source: 'instagram'
+                    };
+                }
+            } else {
+                console.warn(`⚠️ Netlify Function failed (${response.status}), falling back...`);
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ Netlify Function skipped (likely local dev without proxy)', e);
+    }
+
+    // 2. RapidAPI Fallback (If key provided)
+    if (rapidApiKey) {
+        console.log(`🔍 Instagram API: Attempting to fetch metadata for post ID: ${postId}`);
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+            // Instagram Scraper Stable API uses media_code parameter (the shortcode)
+            const apiUrl = `https://instagram-scraper-stable-api.p.rapidapi.com/get_media_data_v2.php?media_code=${postId}`;
+            console.log(`📡 Instagram API: Calling ${apiUrl}`);
+
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'X-RapidAPI-Key': rapidApiKey,
+                    'X-RapidAPI-Host': 'instagram-scraper-stable-api.p.rapidapi.com'
+                },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+                const data = await response.json();
+                const actualData = data.data || data;
+
+                // Extract data...
+                const captionEdges = actualData.edge_media_to_caption?.edges || [];
+                const caption = captionEdges.length > 0 ? captionEdges[0].node.text : '';
+                const username = actualData.owner?.username || '';
+                const apiThumbnail = actualData.display_url;
+
+                // Fallback thumbnail if API returns null but we have postId
+                const finalThumbnail = apiThumbnail || `https://www.instagram.com/p/${postId}/media/?size=l`;
+
+                return {
+                    title: caption ? caption.split('\n')[0].substring(0, 100) : `Instagram Post by ${username || 'Unknown'}`,
+                    description: caption,
+                    authorName: username ? `@${username}` : '',
+                    thumbnail: finalThumbnail,
+                    source: 'instagram'
+                };
+            }
+        } catch (error) {
+            console.error('❌ Instagram API Request Failed:', error);
+        }
+    } else {
+        console.log('Instagram: No RapidAPI key provided, skipping API fetch');
+    }
+
+    // 3. Ultimate Fallback (Manual Construction)
+    // If Netlify function fails AND API fails/missing, just give the link
+    return {
+        title: urlUsername ? `Instagram Post by @${urlUsername}` : `Instagram Post (${postId})`,
+        description: '',
+        authorName: urlUsername ? `${urlUsername}` : '',
+        thumbnail: `https://www.instagram.com/p/${postId}/media/?size=l`,
+        source: 'instagram'
+    };
+}
+
+/**
  * Fetch YouTube video metadata using oEmbed API
  * Returns { title, author_name } or null if failed
  */
@@ -118,6 +231,8 @@ async function fetchFromOEmbed(videoId) {
  * Fetch YouTube video metadata with multi-tier fallback
  * Priority: 1. Invidious (free, no setup) → 2. YouTube API (if key provided) → 3. oEmbed (basic)
  * Returns { title, authorName, description, thumbnail, source } or null
+ * 
+ * Export for external use in RecipeDetailPage and other components
  */
 export async function fetchYouTubeMetadata(videoId, youtubeApiKey = null) {
     // Try 1: Invidious (free, includes description)
@@ -180,13 +295,14 @@ export function parseUrl(url) {
             }
 
             // Generate suggested title based on source and date
-            // YouTube will fetch real title separately
+            // YouTube and Instagram can fetch real titles
             const today = new Date();
             const dateStr = `${today.getMonth() + 1}/${today.getDate()}`;
             const suggestedTitle = `${config.label} 레시피 (${dateStr})`;
 
             // isTempTitle: true for platforms that can't fetch real titles
-            const isTempTitle = sourceName !== 'youtube';
+            // YouTube and Instagram can fetch metadata if API keys are provided
+            const isTempTitle = sourceName !== 'youtube' && sourceName !== 'instagram';
 
             return {
                 url: trimmedUrl,

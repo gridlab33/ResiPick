@@ -1,15 +1,22 @@
 import { getSourceInfo } from '../utils/urlParser';
 import { SourceIcon } from './SourceIcon';
 import { Utensils, Star } from 'lucide-react';
+import { useState } from 'react';
 
 export function RecipeCard({ recipe, onClick }) {
     const sourceInfo = getSourceInfo(recipe.source);
+    const [imageError, setImageError] = useState(false);
 
     return (
         <div className="recipe-card" onClick={() => onClick(recipe)}>
             <div className="recipe-card__image">
-                {recipe.thumbnail ? (
-                    <img src={recipe.thumbnail} alt={recipe.title} />
+                {recipe.thumbnail && !imageError ? (
+                    <img
+                        src={recipe.thumbnail}
+                        alt={recipe.title}
+                        onError={() => setImageError(true)}
+                        referrerPolicy="no-referrer"
+                    />
                 ) : (
                     <div
                         style={{
@@ -30,6 +37,7 @@ export function RecipeCard({ recipe, onClick }) {
                         <SourceIcon source={recipe.source} size={14} />
                     </span>
                 )}
+
                 {recipe.isFavorite && (
                     <div
                         style={{
