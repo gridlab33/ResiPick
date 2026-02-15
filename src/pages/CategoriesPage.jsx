@@ -66,6 +66,31 @@ export function CategoriesPage({
                     </div>
                 </section>
 
+                {/* Section: By Creator */}
+                <section className="category-section">
+                    <h2 className="category-section__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Users size={20} /> 크리에이터별</h2>
+                    {creators && creators.length > 0 ? (
+                        <div className="creator-row">
+                            {creators.map((creator) => (
+                                <div
+                                    key={creator.handle}
+                                    className="creator-avatar"
+                                    onClick={() => onCreatorClick(creator.handle)}
+                                >
+                                    <div className="creator-avatar__image">
+                                        {creator.handle.charAt(1).toUpperCase()}
+                                    </div>
+                                    <span className="creator-avatar__name">{creator.handle}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: 'var(--spacing-lg)' }}>
+                            저장된 레시피가 없습니다
+                        </p>
+                    )}
+                </section>
+
                 {/* Section: By Cuisine Type */}
                 <section className="category-section">
                     <h2 className="category-section__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Utensils size={20} /> 요리 종류</h2>
@@ -155,31 +180,6 @@ export function CategoriesPage({
                             </button>
                         )}
                     </div>
-                </section>
-
-                {/* Section: By Creator */}
-                <section className="category-section">
-                    <h2 className="category-section__title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Users size={20} /> 크리에이터별</h2>
-                    {creators && creators.length > 0 ? (
-                        <div className="creator-row">
-                            {creators.map((creator) => (
-                                <div
-                                    key={creator.handle}
-                                    className="creator-avatar"
-                                    onClick={() => onCreatorClick(creator.handle)}
-                                >
-                                    <div className="creator-avatar__image">
-                                        {creator.handle.charAt(1).toUpperCase()}
-                                    </div>
-                                    <span className="creator-avatar__name">{creator.handle}</span>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: 'var(--spacing-lg)' }}>
-                            저장된 레시피가 없습니다
-                        </p>
-                    )}
                 </section>
             </div>
         </div>

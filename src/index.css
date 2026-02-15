@@ -178,6 +178,7 @@ a:hover {
   font-size: var(--font-size-base);
   font-weight: 500;
   border-radius: var(--radius-full);
+  border: 1px solid #89C592;
   background: rgba(255, 255, 255, 0.6);
   color: var(--color-text-light);
   transition: all var(--transition-fast);
@@ -396,6 +397,7 @@ textarea {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-full);
+  border: 1px solid #FFFFFF;
   background: var(--color-primary);
   color: var(--color-white);
   display: flex;
@@ -1179,7 +1181,7 @@ textarea {
   font-family: var(--font-family);
   background: var(--color-background-secondary);
   color: var(--color-text-light);
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition-fast);

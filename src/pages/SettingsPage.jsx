@@ -66,9 +66,8 @@ export function SettingsPage({ settings, updateSettings }) {
                     {/* RapidAPI Key for Instagram */}
                     <div style={{ padding: 'var(--spacing-md)', background: 'var(--color-white)', borderRadius: 'var(--radius-md)', marginTop: 'var(--spacing-md)' }}>
                         <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', fontWeight: 500 }}>
-                            RapidAPI 키 (선택사항)
-                            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 400, marginLeft: 'var(--spacing-sm)' }}>
-                                Instagram 캡션 자동 가져오기
+                            Instagram API 키 (선택사항)
+                            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontWeight: 400}}> 작성자, 캡션 자동 가져오기
                             </span>
                         </label>
                         <input
@@ -79,7 +78,7 @@ export function SettingsPage({ settings, updateSettings }) {
                             style={{ width: '100%' }}
                         />
                         <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-xs)', lineHeight: 1.5 }}>
-                            💡 Instagram 링크에서 캡션을 자동으로 가져오려면 RapidAPI 키가 필요합니다.{' '}
+                            💡 Instagram 링크에서 작성자, 캡션을 자동으로 가져오려면 RapidAPI 키가 필요합니다.{' '}
                             <a
                                 href="https://rapidapi.com/hub"
                                 target="_blank"

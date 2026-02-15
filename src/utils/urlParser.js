@@ -34,7 +34,7 @@ const URL_PATTERNS = {
  * Export for external use in RecipeDetailPage and other components
  */
 // Helper to extract username from URL if present
-const extractInstagramUsername = (url) => {
+export const extractInstagramUsername = (url) => {
     const match = url.match(/instagram\.com\/([^\/\?]+)/i);
     // Filter out 'reel', 'p', 'reels', etc. if they are captured as username
     if (match && match[1]) {
@@ -45,6 +45,13 @@ const extractInstagramUsername = (url) => {
         return candidate;
     }
     return '';
+};
+
+// Helper to extract Instagram media ID
+export const extractInstagramId = (url) => {
+    if (!url) return null;
+    const match = url.match(/(?:https?:\/\/)?(?:www\.)?instagram\.com\/(reel|p)\/([A-Za-z0-9_-]+)/i);
+    return match ? match[2] : null;
 };
 
 export async function fetchInstagramMetadata(postId, rapidApiKey, originalUrl = '') {

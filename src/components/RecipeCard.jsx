@@ -12,10 +12,15 @@ export function RecipeCard({ recipe, onClick }) {
             <div className="recipe-card__image">
                 {recipe.thumbnail && !imageError ? (
                     <img
-                        src={`https://images.weserv.nl/?url=${encodeURIComponent(recipe.thumbnail)}`}
+                        src={
+                            recipe.source === 'instagram'
+                                ? `https://images.weserv.nl/?url=${encodeURIComponent(recipe.thumbnail)}&n=-1`
+                                : recipe.thumbnail
+                        }
                         alt={recipe.title}
                         onError={() => setImageError(true)}
                         referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
                     />
                 ) : (
                     <div

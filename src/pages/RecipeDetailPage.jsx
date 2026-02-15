@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ArrowLeft, Utensils, User, ChevronDown, ChevronUp, ChefHat, ShoppingBasket, MousePointerClick, Check, Edit2, Share2, Trash2, ShoppingCart, Star } from 'lucide-react';
-import { getSourceInfo } from '../utils/urlParser';
+import { getSourceInfo, extractInstagramId } from '../utils/urlParser';
 import { SourceIcon } from '../components/SourceIcon';
 import { generateRecipeData, getCoupangSearchUrl } from '../utils/recipeGenerator';
 
@@ -10,6 +10,9 @@ export function RecipeDetailPage({ recipe, onBack, onUpdate, onDelete, onAddToSh
     const [showRecipe, setShowRecipe] = useState(true);
     const [checkedIngredients, setCheckedIngredients] = useState(new Set());
     const sourceInfo = getSourceInfo(recipe?.source);
+
+    // Extract Instagram ID if applicable
+    const instagramId = recipe?.source === 'instagram' ? extractInstagramId(recipe.url) : null;
 
     // Generate recipe data based on recipe info
     const recipeData = useMemo(() => generateRecipeData(recipe), [recipe]);
@@ -71,9 +74,20 @@ export function RecipeDetailPage({ recipe, onBack, onUpdate, onDelete, onAddToSh
 
     return (
         <div className="page" style={{ paddingBottom: checkedIngredients.size > 0 ? '160px' : '100px' }}>
-            {/* Header Image */}
+            {/* Header Image or Video */}
             <div className="detail-header">
-                {recipe.thumbnail ? (
+                {instagramId ? (
+                    <div className="detail-video-container" style={{ width: '100%', aspectRatio: '9/16', overflow: 'hidden', paddingBottom: '0', borderRadius: 'var(--radius-md)', background: '#000' }}>
+                        <iframe
+                            src={`https://www.instagram.com/p/${instagramId}/embed/captioned/`}
+                            style={{ width: '100%', height: '100%', border: 'none', objectFit: 'cover' }}
+                            frameBorder="0"
+                            scrolling="no"
+                            allowTransparency="true"
+                            allow="encrypted-media"
+                        />
+                    </div>
+                ) : recipe.thumbnail ? (
                     <img src={recipe.thumbnail} alt={recipe.title} className="detail-image" />
                 ) : (
                     <div
